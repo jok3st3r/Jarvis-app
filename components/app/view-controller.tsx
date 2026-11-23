@@ -6,6 +6,7 @@ import { useAgent, useSessionContext } from '@livekit/components-react';
 import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
 import { HoldToTalk } from '@/components/app/hold-to-talk';
 import { JarvisStatus } from '@/components/app/jarvis-status';
+import { ModelPicker } from '@/components/app/model-picker';
 import { WelcomeView } from '@/components/app/welcome-view';
 
 const MotionWelcomeView = motion.create(WelcomeView);
@@ -75,6 +76,8 @@ export function ViewController({ isVideoInputSupported }: ViewControllerProps) {
       {isConnected && <JarvisStatus />}
       {/* Hold to talk, plus the noisy-room hint */}
       {isConnected && <HoldToTalk />}
+      {/* Which Claude model Jarvis is using, always visible during a call */}
+      {isConnected && <ModelPicker />}
     </>
   );
 }

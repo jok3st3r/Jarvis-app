@@ -11,7 +11,6 @@ import {
   AgentTrackToggle,
   agentTrackToggleVariants,
 } from '@/components/agents-ui/agent-track-toggle';
-import { ModelPicker } from '@/components/app/model-picker';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
 import {
@@ -298,9 +297,8 @@ export function AgentControlBar({
         {...MOTION_PROPS}
         inert={!(isChatOpen || isChatOpenUncontrolled)}
         animate={isChatOpen || isChatOpenUncontrolled ? 'visible' : 'hidden'}
-        className="border-input/50 flex w-full flex-col items-stretch overflow-hidden border-b"
+        className="border-input/50 flex w-full items-start overflow-hidden border-b"
       >
-        <ModelPicker />
         <AgentChatInput
           chatOpen={isChatOpen || isChatOpenUncontrolled}
           onSend={handleSendMessage}

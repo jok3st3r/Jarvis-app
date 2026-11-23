@@ -12,9 +12,10 @@ const MODELS = [
 ];
 
 const CLS = {
-  row: 'flex w-full items-center gap-2 pt-1 pb-2 pl-1',
+  wrap: 'pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center px-4',
+  row: 'bg-card/90 border-border pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-full border py-1 pr-1 pl-3 shadow-md backdrop-blur',
   label: 'text-muted-foreground font-mono text-[10px] tracking-widest uppercase',
-  track: 'bg-muted/70 flex flex-1 gap-1 rounded-full p-1',
+  track: 'flex flex-1 gap-1',
   chip: 'flex flex-1 flex-col items-center rounded-full px-2 py-1 text-xs leading-tight transition-colors',
   on: 'bg-primary text-primary-foreground shadow-sm',
   off: 'text-foreground/80 hover:bg-background/70',
@@ -47,27 +48,29 @@ export function ModelPicker() {
   };
 
   return (
-    <div className={CLS.row}>
-      <span className={CLS.label}>Brain</span>
-      <div className={CLS.track}>
-        {MODELS.map((m) => {
-          const active = (pending ?? current) === m.key;
-          return (
-            <button
-              key={m.key}
-              type="button"
-              onClick={() => choose(m.key)}
-              disabled={!agent}
-              title={`Switch Jarvis to Claude ${m.name}`}
-              className={`${CLS.chip} ${active ? CLS.on : CLS.off}`}
-            >
-              <span className="font-semibold">{m.name}</span>
-              <span className={active ? CLS.hintOn : CLS.hintOff}>
-                {pending === m.key ? 'Switching' : m.hint}
-              </span>
-            </button>
-          );
-        })}
+    <div className={CLS.wrap}>
+      <div className={CLS.row}>
+        <span className={CLS.label}>Brain</span>
+        <div className={CLS.track}>
+          {MODELS.map((m) => {
+            const active = (pending ?? current) === m.key;
+            return (
+              <button
+                key={m.key}
+                type="button"
+                onClick={() => choose(m.key)}
+                disabled={!agent}
+                title={`Switch Jarvis to Claude ${m.name}`}
+                className={`${CLS.chip} ${active ? CLS.on : CLS.off}`}
+              >
+                <span className="font-semibold">{m.name}</span>
+                <span className={active ? CLS.hintOn : CLS.hintOff}>
+                  {pending === m.key ? 'Switching' : m.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
