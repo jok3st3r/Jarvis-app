@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAgent, useSessionContext } from '@livekit/components-react';
 import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
+import { JarvisStatus } from '@/components/app/jarvis-status';
 import { WelcomeView } from '@/components/app/welcome-view';
 
 const MotionWelcomeView = motion.create(WelcomeView);
@@ -37,36 +38,40 @@ export function ViewController({ isVideoInputSupported }: ViewControllerProps) {
   const { resolvedTheme } = useTheme();
 
   return (
-    <AnimatePresence mode="wait">
-      {/* Welcome view */}
-      {!isConnected && (
-        <MotionWelcomeView
-          key="welcome"
-          {...VIEW_MOTION_PROPS}
-          startButtonText="Start call"
-          onStartCall={start}
-        />
-      )}
-      {/* Session view */}
-      {isConnected && (
-        <MotionSessionView
-          key="session-view"
-          {...VIEW_MOTION_PROPS}
-          preConnectMessage={
-            agent.isConnected ? 'Agent is listening, ask it a question' : 'Waiting for agent'
-          }
-          controls={{
-            leave: true,
-            microphone: true,
-            chat: true,
-            camera: isVideoInputSupported,
-            screenShare: isVideoInputSupported,
-          }}
-          isPreConnectBufferEnabled={true}
-          themeMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
-          className="fixed inset-0"
-        />
-      )}
-    </AnimatePresence>
+    <>
+      <AnimatePresence mode="wait">
+        {/* Welcome view */}
+        {!isConnected && (
+          <MotionWelcomeView
+            key="welcome"
+            {...VIEW_MOTION_PROPS}
+            startButtonText="Start call"
+            onStartCall={start}
+          />
+        )}
+        {/* Session view */}
+        {isConnected && (
+          <MotionSessionView
+            key="session-view"
+            {...VIEW_MOTION_PROPS}
+            preConnectMessage={
+              agent.isConnected ? 'Agent is listening, ask it a question' : 'Waiting for agent'
+            }
+            controls={{
+              leave: true,
+              microphone: true,
+              chat: true,
+              camera: isVideoInputSupported,
+              screenShare: isVideoInputSupported,
+            }}
+            isPreConnectBufferEnabled={true}
+            themeMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
+            className="fixed inset-0"
+          />
+        )}
+      </AnimatePresence>
+      {/* What Jarvis is doing right now */}
+      {isConnected && <JarvisStatus />}
+    </>
   );
 }
