@@ -193,7 +193,7 @@ export function AgentSessionView_01({
     <section
       ref={ref}
       className={cn(
-        'bg-background @container/agent-session-block relative z-10 h-full w-full overflow-hidden',
+        'bg-transparent @container/agent-session-block relative z-10 h-full w-full overflow-hidden',
         className
       )}
       {...props}

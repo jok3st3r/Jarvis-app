@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { createElement as h } from 'react';
-import { Public_Sans } from 'next/font/google';
+import { Fraunces, Public_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
 import { ThemeProvider } from '@/components/app/theme-provider';
 import { ThemeToggle } from '@/components/app/theme-toggle';
@@ -10,6 +10,11 @@ import '@/styles/globals.css';
 
 const publicSans = Public_Sans({
   variable: '--font-public-sans',
+  subsets: ['latin'],
+});
+
+const fraunces = Fraunces({
+  variable: '--font-fraunces',
   subsets: ['latin'],
 });
 
@@ -34,27 +39,39 @@ export default function RootLayout({ children }: RootLayoutProps) {
     {
       lang: 'en',
       suppressHydrationWarning: true,
-      className: cn(publicSans.variable, commitMono.variable, 'scroll-smooth font-sans antialiased'),
+      className: cn(
+        publicSans.variable,
+        fraunces.variable,
+        commitMono.variable,
+        'scroll-smooth font-sans antialiased'
+      ),
     },
     h(
       'head',
       null,
       h('title', null, 'Jarvis'),
-      h('meta', { name: 'description', content: 'Jarvis voice assistant' })
+      h('meta', { name: 'description', content: 'Jarvis voice assistant' }),
+      h('meta', { name: 'theme-color', content: '#f4eee5' })
     ),
     h(
       'body',
       { className: 'overflow-x-hidden' },
       h(
         ThemeProvider as any,
-        { attribute: 'class', defaultTheme: 'system', enableSystem: true, disableTransitionOnChange: true },
+        {
+          attribute: 'class',
+          defaultTheme: 'system',
+          enableSystem: true,
+          disableTransitionOnChange: true,
+        },
         children,
         historyButton,
         h(
           'div',
           { className: 'group fixed bottom-0 left-1/2 z-50 mb-2 -translate-x-1/2' },
           h(ThemeToggle as any, {
-            className: 'translate-y-20 transition-transform delay-150 duration-300 group-hover:translate-y-0',
+            className:
+              'translate-y-20 transition-transform delay-150 duration-300 group-hover:translate-y-0',
           })
         )
       )

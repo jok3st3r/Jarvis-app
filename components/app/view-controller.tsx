@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import { useAgent, useSessionContext } from '@livekit/components-react';
 import { AgentSessionView_01 } from '@/components/agents-ui/blocks/agent-session-view-01';
+import { HoldToTalk } from '@/components/app/hold-to-talk';
 import { JarvisStatus } from '@/components/app/jarvis-status';
 import { WelcomeView } from '@/components/app/welcome-view';
 
@@ -72,6 +73,8 @@ export function ViewController({ isVideoInputSupported }: ViewControllerProps) {
       </AnimatePresence>
       {/* What Jarvis is doing right now */}
       {isConnected && <JarvisStatus />}
+      {/* Hold to talk, plus the noisy-room hint */}
+      {isConnected && <HoldToTalk />}
     </>
   );
 }
