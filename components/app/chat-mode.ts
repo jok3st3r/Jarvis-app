@@ -4,7 +4,7 @@
 export type ChatMode = 'voice' | 'text';
 
 export function setChatMode(mode: ChatMode) {
-  document.cookie = `jarvis_mode=${mode}; path=/; max-age=600; samesite=lax`;
+  document.cookie = `jarvis_mode=${mode}; path=/; max-age=60; samesite=lax`;
 }
 
 // Ask Jarvis to switch his voice off ("on" = text only) or back on. Never throws.
