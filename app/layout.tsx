@@ -51,7 +51,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
       null,
       h('title', null, 'Jarvis'),
       h('meta', { name: 'description', content: 'Jarvis voice assistant' }),
-      h('meta', { name: 'theme-color', content: '#f4eee5' })
+      h('meta', { name: 'theme-color', content: '#f4eee5' }),
+      h('link', { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }),
+      h('link', { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/icon-192.png' }),
+      h('link', { rel: 'manifest', href: '/manifest.webmanifest' }),
+      h('meta', { name: 'apple-mobile-web-app-title', content: 'Jarvis' }),
+      h('meta', { name: 'apple-mobile-web-app-capable', content: 'yes' })
     ),
     h(
       'body',

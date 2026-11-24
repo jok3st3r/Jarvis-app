@@ -32,5 +32,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|login|api/login).*)'],
+  // Icons and the app manifest stay public so the phone can show the gold icon before sign-in.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|login|api/login|apple-touch-icon|icon-|manifest.webmanifest).*)',
+  ],
 };

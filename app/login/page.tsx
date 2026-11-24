@@ -58,14 +58,17 @@ export default function LoginPage() {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user, pass, remember }),
+      body: JSON.stringify({ user: user.trim(), pass, remember }),
     }).catch(() => null);
     if (res?.ok) {
       window.location.href = '/';
       return;
     }
     setBusy(false);
-    setError(res ? 'Wrong username or password.' : 'Could not reach the app. Try again.');
+    const data = res ? await res.json().catch(() => ({})) : null;
+    setError(
+      res ? data?.error || 'Wrong username or password.' : 'Could not reach the app. Try again.'
+    );
   };
 
   return (
@@ -76,6 +79,9 @@ export default function LoginPage() {
           style={S.input}
           placeholder="Username"
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           value={user}
           onChange={(e) => setUser(e.target.value)}
         />
