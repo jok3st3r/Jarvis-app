@@ -22,6 +22,7 @@ const CLS = {
   chip: 'border-border bg-card/70 text-foreground/80 rounded-full border px-3 py-1 text-xs font-medium',
   start:
     'mt-10 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase shadow-[0_10px_30px_rgba(120,85,50,0.25)]',
+  text: 'mt-3 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase',
   footer: 'fixed bottom-5 left-0 flex w-full items-center justify-center px-6',
   footerText: 'text-muted-foreground max-w-prose text-center text-xs leading-5 text-pretty',
 };
@@ -53,11 +54,13 @@ function Monogram() {
 interface WelcomeViewProps {
   startButtonText: string;
   onStartCall: () => void;
+  onStartText?: () => void;
 }
 
 export const WelcomeView = ({
   startButtonText,
   onStartCall,
+  onStartText,
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
   const [greeting, setGreeting] = useState('Welcome back');
@@ -73,7 +76,7 @@ export const WelcomeView = ({
         <p className={CLS.eyebrow}>Jarvis &middot; Personal assistant</p>
         <h1 className={CLS.title}>{greeting}, Eli.</h1>
         <p className={CLS.subtitle}>
-          Your schedule, money, jobs and notes in one place. Just talk.
+          Your schedule, money, jobs and notes in one place. Talk or text.
         </p>
         <div className={CLS.chips}>
           {SKILLS.map((skill) => (
@@ -85,6 +88,11 @@ export const WelcomeView = ({
         <Button size="lg" onClick={onStartCall} className={CLS.start}>
           {startButtonText}
         </Button>
+        {onStartText && (
+          <Button size="lg" variant="outline" onClick={onStartText} className={CLS.text}>
+            Text Jarvis
+          </Button>
+        )}
       </section>
 
       <div className={CLS.footer}>

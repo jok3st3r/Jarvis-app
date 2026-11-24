@@ -44,8 +44,17 @@ export async function POST(req: Request) {
     const participantIdentity = `voice_assistant_user_${Math.floor(Math.random() * 10_000)}`;
     const roomName = `voice_assistant_room_${Math.floor(Math.random() * 10_000)}`;
 
+    // Text chat or voice: the app sets a short-lived "jarvis_mode" cookie, and Jarvis reads it.
+    const cookie = req.headers.get('cookie') ?? '';
+    const mode = /(?:^|;\s*)jarvis_mode=text(?:;|$)/.test(cookie) ? 'text' : 'voice';
+
     const participantToken = await createParticipantToken(
-      { identity: participantIdentity, name: participantName },
+      {
+        identity: participantIdentity,
+        name: participantName,
+        metadata: mode,
+        attributes: { jarvis_mode: mode },
+      },
       roomName,
       roomConfig
     );

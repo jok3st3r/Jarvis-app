@@ -1,59 +1,23 @@
 /* eslint-disable */
-import { createElement as h } from 'react';
+import { HistoryView } from '@/components/app/history-view';
+import { getFolders, redis } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 
-async function redis(command: string[]) {
-  const res = await fetch(process.env.KV_REST_API_URL as string, {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + process.env.KV_REST_API_TOKEN },
-    body: JSON.stringify(command),
-    cache: 'no-store',
-  });
-  const data = await res.json();
-  return data.result;
-}
-
 async function getConvos() {
-  const ids = (await redis(['LRANGE', 'convos', '0', '49'])) || [];
+  const ids = (await redis(['LRANGE', 'convos', '0', '199'])) || [];
   if (ids.length === 0) return [];
-  const raw = await redis(['MGET', ...ids.map((id: string) => 'convo:' + id)]);
-  return raw.filter(Boolean).map((r: string) => JSON.parse(r));
+  const raw = (await redis(['MGET', ...ids.map((id: string) => 'convo:' + id)])) || [];
+  const map = ((await redis(['HGETALL', 'convo_folders'])) || []) as string[];
+  const folderOf: Record<string, string> = {};
+  for (let i = 0; i < map.length; i += 2) folderOf[map[i]] = map[i + 1];
+  return raw
+    .filter(Boolean)
+    .map((r: string) => JSON.parse(r))
+    .map((c: any) => ({ ...c, folder: folderOf[c.id] || '' }));
 }
 
 export default async function HistoryPage() {
-  const convos = await getConvos();
-  const box = { border: '1px solid #444', borderRadius: 10, padding: 12, marginBottom: 12 };
-
-  return h(
-    'main',
-    { style: { maxWidth: 700, margin: '0 auto', padding: 20, fontFamily: 'sans-serif' } },
-    h('a', { href: '/', style: { color: '#888' } }, '← Back to Jarvis'),
-    h('h1', { style: { fontSize: 28, margin: '16px 0' } }, 'Conversations'),
-    convos.length === 0 ? h('p', null, 'No conversations yet.') : null,
-    ...convos.map((c: any) =>
-      h(
-        'details',
-        { key: c.id, style: box },
-        h(
-          'summary',
-          { style: { cursor: 'pointer' } },
-          h('strong', null, new Date(c.started).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })),
-          ' — ' + (c.messages[0] ? c.messages[0].text.slice(0, 60) : '')
-        ),
-        h(
-          'div',
-          { style: { marginTop: 10 } },
-          ...c.messages.map((m: any, i: number) =>
-            h(
-              'p',
-              { key: i, style: { margin: '8px 0' } },
-              h('strong', null, m.role === 'user' ? 'You: ' : 'Jarvis: '),
-              m.text
-            )
-          )
-        )
-      )
-    )
-  );
+  const [convos, folders] = await Promise.all([getConvos(), getFolders()]);
+  return <HistoryView convos={convos} folders={folders} />;
 }
