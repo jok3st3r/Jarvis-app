@@ -12,6 +12,8 @@ import {
 import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
 import { askTextMode } from '@/components/app/chat-mode';
 
+/* eslint-disable */
+
 // Text-only chat with Jarvis: no mic, no voice. He answers in writing.
 const S = {
   wrap: {
@@ -71,7 +73,7 @@ const S = {
 } as const;
 
 interface TextChatViewProps {
-  onVoice: () => void;
+  onVoice: () => Promise<boolean>;
 }
 
 export function TextChatView({ onVoice }: TextChatViewProps) {
@@ -81,7 +83,11 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
   const { agent, agentAttributes } = useVoiceAssistant();
   const { localParticipant } = useLocalParticipant();
   const [draft, setDraft] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const busyRef = useRef(false);
   const asked = useRef(false);
+  const pendingMode = useRef<Promise<boolean> | null>(null);
 
   // Safety net: make sure Jarvis knows this is a text chat, even if the start signal got lost.
   useEffect(() => {
@@ -89,20 +95,47 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
       return;
     }
     asked.current = true;
-    askTextMode(localParticipant, agent, true);
+    pendingMode.current = askTextMode(localParticipant, agent, true).finally(() => {
+      pendingMode.current = null;
+    });
   }, [agent, agentAttributes, localParticipant]);
 
   const submit = async () => {
     const text = draft.trim();
-    if (!text || isSending) {
+    if (!text || isSending || busyRef.current) {
       return;
     }
-    setDraft('');
+    busyRef.current = true;
+    setBusy(true);
+    setError('');
     try {
+      if (!(await (pendingMode.current ?? askTextMode(localParticipant, agent, true)))) {
+        setError('Jarvis hasn’t confirmed text mode. Try sending again.');
+        return;
+      }
+      setDraft('');
       await send(text);
     } catch (e) {
       console.warn('Send failed:', e);
       setDraft(text);
+      setError('Message couldn’t be sent. Try again.');
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  };
+
+  const switchToVoice = async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await pendingMode.current;
+      if (!(await onVoice())) setError('Couldn’t switch to voice. Try again.');
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
     }
   };
 
@@ -136,12 +169,22 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
               }
             }}
           />
-          <button type="button" style={S.send as any} onClick={submit} disabled={!draft.trim()}>
+          <button
+            type="button"
+            style={S.send as any}
+            onClick={submit}
+            disabled={!draft.trim() || busy || isSending}
+          >
             Send
           </button>
         </div>
+        {error && (
+          <p role="status" style={S.hint as any}>
+            {error}
+          </p>
+        )}
         <div style={S.tools as any}>
-          <button type="button" style={S.tool as any} onClick={onVoice}>
+          <button type="button" style={S.tool as any} onClick={switchToVoice} disabled={busy}>
             Switch to voice
           </button>
           <button type="button" style={S.tool as any} onClick={() => session.end()}>

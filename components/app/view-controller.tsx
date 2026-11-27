@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { AnimatePresence, motion } from 'motion/react';
 import {
@@ -40,15 +40,57 @@ const VIEW_MOTION_PROPS = {
 
 interface ViewControllerProps {
   isVideoInputSupported: boolean;
+  textMode: boolean;
+  setTextMode: (on: boolean) => void;
 }
 
-export function ViewController({ isVideoInputSupported }: ViewControllerProps) {
+export function ViewController({
+  isVideoInputSupported,
+  textMode,
+  setTextMode,
+}: ViewControllerProps) {
   const { isConnected, start } = useSessionContext();
   const agent = useAgent();
   const { resolvedTheme } = useTheme();
   const { agent: voiceAgent } = useVoiceAssistant();
   const { localParticipant } = useLocalParticipant();
-  const [textMode, setTextMode] = useState(false);
+
+  useEffect(() => {
+    if (!isConnected || textMode || !navigator.wakeLock) return;
+
+    let disposed = false;
+    let requesting = false;
+    let lock: WakeLockSentinel | undefined;
+
+    const keepScreenAwake = async () => {
+      if (disposed || requesting || document.visibilityState !== 'visible') return;
+      if (lock && !lock.released) return;
+
+      requesting = true;
+      try {
+        const nextLock = await navigator.wakeLock.request('screen');
+        if (disposed || document.visibilityState !== 'visible') {
+          await nextLock.release();
+        } else {
+          lock = nextLock;
+        }
+      } catch {
+        // Browser and device power policies can deny a wake lock.
+      } finally {
+        requesting = false;
+      }
+    };
+
+    const onVisibilityChange = () => void keepScreenAwake();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    void keepScreenAwake();
+
+    return () => {
+      disposed = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (lock && !lock.released) void lock.release().catch(() => {});
+    };
+  }, [isConnected, textMode]);
 
   const startCall = () => {
     setChatMode('voice');
@@ -65,7 +107,6 @@ export function ViewController({ isVideoInputSupported }: ViewControllerProps) {
   // Mid-call switches: tell Jarvis, then turn the mic off or on.
   const switchToText = async () => {
     setTextMode(true);
-    await askTextMode(localParticipant, voiceAgent, true);
     try {
       await localParticipant.setMicrophoneEnabled(false);
     } catch (e) {
@@ -74,13 +115,14 @@ export function ViewController({ isVideoInputSupported }: ViewControllerProps) {
   };
 
   const switchToVoice = async () => {
+    if (!(await askTextMode(localParticipant, voiceAgent, false))) return false;
     setTextMode(false);
-    await askTextMode(localParticipant, voiceAgent, false);
     try {
       await localParticipant.setMicrophoneEnabled(true);
     } catch (e) {
       console.warn('Mic on failed:', e);
     }
+    return true;
   };
 
   return (

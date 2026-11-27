@@ -13,12 +13,12 @@ export async function askTextMode(localParticipant: any, agent: any, on: boolean
     return false;
   }
   try {
-    await localParticipant.performRpc({
+    const reply = await localParticipant.performRpc({
       destinationIdentity: agent.identity,
       method: 'set_text_mode',
       payload: on ? 'on' : 'off',
     });
-    return true;
+    return reply === (on ? 'on' : 'off');
   } catch (e) {
     console.warn('Text mode switch failed:', e);
     return false;
