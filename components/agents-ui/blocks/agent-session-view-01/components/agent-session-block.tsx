@@ -23,6 +23,7 @@ import { TileLayout } from './tile-view';
  * `type: 'wave'` accepts `lineWidth`, etc).
  */
 export type AudioVisualizerConfig =
+  | { type: 'gold-orb'; color?: never }
   | ({ type?: 'bar' } & AgentAudioVisualizerBarProps)
   | ({ type: 'wave' } & AgentAudioVisualizerWaveProps)
   | ({ type: 'grid' } & AgentAudioVisualizerGridProps)

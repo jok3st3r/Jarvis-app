@@ -196,6 +196,7 @@ export function ViewController({
               screenShare: isVideoInputSupported,
             }}
             isPreConnectBufferEnabled={true}
+            audioVisualizer={{ type: 'gold-orb' }}
             themeMode={resolvedTheme === 'dark' ? 'dark' : 'light'}
             className="fixed inset-0"
           />

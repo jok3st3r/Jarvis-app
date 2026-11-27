@@ -1,0 +1,63 @@
+.frame {
+  width: min(74vw, 42dvh, 320px);
+  aspect-ratio: 1;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.sphere {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+  animation: float 9s ease-in-out infinite;
+}
+
+.sphere::before {
+  position: absolute;
+  z-index: -1;
+  inset: -7%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(240 163 53 / 0.46), transparent 70%);
+  content: '';
+  opacity: 0.35;
+  transition: opacity 280ms ease;
+}
+
+.sphere img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgb(197 118 26 / 0.24));
+}
+
+.sphere[data-state='thinking']::before {
+  opacity: 0.7;
+}
+
+.sphere[data-state='speaking']::before {
+  opacity: 0.95;
+  animation: pulse 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes pulse {
+  from {
+    opacity: 0.65;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sphere,
+  .sphere::before,
+  .sphere[data-state='speaking']::before {
+    animation: none;
+    transition: none;
+  }
+}

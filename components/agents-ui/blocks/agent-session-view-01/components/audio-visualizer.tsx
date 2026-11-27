@@ -24,6 +24,7 @@ import {
   type AgentAudioVisualizerWaveProps,
 } from '@/components/agents-ui/agent-audio-visualizer-wave';
 import { cn } from '@/lib/shadcn/utils';
+import orbStyles from './gold-orb.module.css';
 
 const MotionAgentAudioVisualizerAura = motion.create(AgentAudioVisualizerAura);
 const MotionAgentAudioVisualizerBar = motion.create(AgentAudioVisualizerBar);
@@ -75,7 +76,7 @@ function getBarClassName(size: AgentAudioVisualizerBarProps['size']) {
 
 interface AudioVisualizerProps extends MotionProps {
   isChatOpen: boolean;
-  type: 'bar' | 'wave' | 'grid' | 'radial' | 'aura';
+  type: 'bar' | 'wave' | 'grid' | 'radial' | 'aura' | 'gold-orb';
   config?:
     | AgentAudioVisualizerBarProps
     | AgentAudioVisualizerWaveProps
@@ -98,6 +99,24 @@ export function AudioVisualizer({
   // `state`/`audioTrack` always reflect the live agent session; any same-named field on
   // `config` is ignored by spreading it before these are set explicitly below.
   switch (type) {
+    case 'gold-orb':
+      return (
+        <motion.div className={cn(className, orbStyles.frame)} {...props} aria-hidden="true">
+          <div className={orbStyles.sphere} data-state={state}>
+            {/* Use the two original Lovable renditions without resampling the glass detail. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt=""
+              src="/jarvis-living-gold-512.webp"
+              srcSet="/jarvis-living-gold-512.webp 512w, /jarvis-living-gold-1024.webp 1024w"
+              sizes="(max-width: 360px) 74vw, 320px"
+              width={512}
+              height={512}
+              draggable={false}
+            />
+          </div>
+        </motion.div>
+      );
     case 'aura': {
       return (
         <MotionAgentAudioVisualizerAura
