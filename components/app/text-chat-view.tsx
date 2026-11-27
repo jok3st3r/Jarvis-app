@@ -1,4 +1,3 @@
-/* eslint-disable */
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -11,66 +10,8 @@ import {
 } from '@livekit/components-react';
 import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcript';
 import { askTextMode } from '@/components/app/chat-mode';
-
-/* eslint-disable */
-
-// Text-only chat with Jarvis: no mic, no voice. He answers in writing.
-const S = {
-  wrap: {
-    position: 'fixed',
-    inset: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    background: 'var(--background)',
-  },
-  body: { flex: 1, minHeight: 0, paddingTop: 110 },
-  bottom: {
-    width: '100%',
-    maxWidth: 720,
-    margin: '0 auto',
-    padding: '8px 12px 72px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  row: { display: 'flex', gap: 8, alignItems: 'flex-end' },
-  input: {
-    flex: 1,
-    resize: 'none',
-    minHeight: 44,
-    maxHeight: 160,
-    padding: '10px 14px',
-    borderRadius: 20,
-    border: '1px solid var(--border)',
-    background: 'var(--card)',
-    color: 'var(--foreground)',
-    fontSize: 16,
-    lineHeight: '22px',
-    outline: 'none',
-    fontFamily: 'inherit',
-  },
-  send: {
-    height: 44,
-    padding: '0 18px',
-    borderRadius: 999,
-    border: 'none',
-    background: 'var(--primary)',
-    color: 'var(--primary-foreground)',
-    fontWeight: 700,
-    fontSize: 14,
-  },
-  tools: { display: 'flex', gap: 8, justifyContent: 'center' },
-  tool: {
-    padding: '6px 12px',
-    borderRadius: 999,
-    border: '1px solid var(--border)',
-    background: 'var(--card)',
-    color: 'var(--foreground)',
-    fontSize: 13,
-    fontWeight: 600,
-  },
-  hint: { textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13, padding: '0 16px' },
-} as const;
+import { ModelPicker } from '@/components/app/model-picker';
+import { Button } from '@/components/ui/button';
 
 interface TextChatViewProps {
   onVoice: () => Promise<boolean>;
@@ -88,6 +29,32 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
   const busyRef = useRef(false);
   const asked = useRef(false);
   const pendingMode = useRef<Promise<boolean> | null>(null);
+  const chat = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const element = chat.current;
+    if (!viewport || !element) return;
+
+    const fitVisibleScreen = () => {
+      // Mobile keyboards can resize the visible viewport without resizing the page.
+      if (viewport.scale !== 1) {
+        element.style.removeProperty('height');
+        element.style.removeProperty('top');
+        return;
+      }
+      element.style.height = `${viewport.height}px`;
+      element.style.top = `${viewport.offsetTop}px`;
+    };
+
+    fitVisibleScreen();
+    viewport.addEventListener('resize', fitVisibleScreen);
+    viewport.addEventListener('scroll', fitVisibleScreen);
+    return () => {
+      viewport.removeEventListener('resize', fitVisibleScreen);
+      viewport.removeEventListener('scroll', fitVisibleScreen);
+    };
+  }, []);
 
   // Safety net: make sure Jarvis knows this is a text chat, even if the start signal got lost.
   useEffect(() => {
@@ -140,56 +107,86 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
   };
 
   return (
-    <section style={S.wrap as any}>
-      <div style={S.body as any}>
+    <section
+      ref={chat}
+      aria-label="Chat with Jarvis"
+      className="bg-background fixed inset-x-0 top-0 z-[60] grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
+    >
+      <header className="border-border border-b pt-[env(safe-area-inset-top)]">
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-1 px-4 pb-2 sm:px-6">
+          <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3">
+            <h1 className="font-display text-xl font-semibold">Jarvis</h1>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="min-h-11"
+                onClick={switchToVoice}
+                disabled={busy}
+              >
+                Switch to voice
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="min-h-11"
+                onClick={() => session.end()}
+              >
+                End chat
+              </Button>
+            </div>
+          </div>
+          <ModelPicker inline />
+          <p role="status" className="text-muted-foreground min-h-4 truncate text-center text-xs">
+            {agentAttributes?.jarvis_status}
+          </p>
+        </div>
+      </header>
+      <div className="min-h-0 min-w-0">
         {messages.length === 0 ? (
-          <p style={{ ...S.hint, marginTop: 40 } as any}>
-            {agent ? 'Text chat. Jarvis will answer here.' : 'Waking Jarvis up...'}
+          <p className="text-muted-foreground mt-8 px-4 text-center text-sm">
+            {agent ? 'How can I help?' : 'Waking Jarvis up...'}
           </p>
         ) : (
           <AgentChatTranscript
             agentState={agentState}
             messages={messages}
-            className="mx-auto h-full max-w-2xl"
+            className="mx-auto h-full max-w-3xl"
+            wideReplies
           />
         )}
       </div>
-      <div style={S.bottom as any}>
-        <div style={S.row as any}>
-          <textarea
-            style={S.input as any}
-            rows={1}
-            value={draft}
-            placeholder="Message Jarvis"
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-          />
-          <button
-            type="button"
-            style={S.send as any}
-            onClick={submit}
-            disabled={!draft.trim() || busy || isSending}
-          >
-            Send
-          </button>
-        </div>
-        {error && (
-          <p role="status" style={S.hint as any}>
-            {error}
-          </p>
-        )}
-        <div style={S.tools as any}>
-          <button type="button" style={S.tool as any} onClick={switchToVoice} disabled={busy}>
-            Switch to voice
-          </button>
-          <button type="button" style={S.tool as any} onClick={() => session.end()}>
-            End chat
-          </button>
+      <div className="bg-background border-border border-t pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto w-full max-w-3xl px-4 pt-3 sm:px-6">
+          <div className="flex items-end gap-2">
+            <textarea
+              aria-label="Message Jarvis"
+              className="bg-card border-border focus-visible:ring-ring max-h-36 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border px-3 py-2.5 text-base leading-6 focus-visible:ring-2 focus-visible:outline-none"
+              rows={1}
+              value={draft}
+              placeholder="Message Jarvis"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  submit();
+                }
+              }}
+            />
+            <Button
+              type="button"
+              className="min-h-11 rounded-full px-4 font-semibold"
+              onClick={submit}
+              disabled={!draft.trim() || busy || isSending}
+            >
+              Send
+            </Button>
+          </div>
+          {error && (
+            <p role="status" className="text-destructive mt-2 text-sm">
+              {error}
+            </p>
+          )}
         </div>
       </div>
     </section>
@@ -215,9 +212,15 @@ export function TextToggle({ onText }: TextToggleProps) {
         pointerEvents: 'none',
       }}
     >
-      <button type="button" style={{ ...S.tool, pointerEvents: 'auto' } as any} onClick={onText}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="pointer-events-auto rounded-full"
+        onClick={onText}
+      >
         Switch to text
-      </button>
+      </Button>
     </div>
   );
 }

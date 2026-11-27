@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 const SKILLS = ['Calendar', 'Bills & reserve', 'Dispatch jobs', 'Reminders', 'Notion memory'];
@@ -13,7 +14,7 @@ const CLS = {
   inner: 'border-primary/25 absolute inset-2 rounded-full border',
   letter:
     'bg-card text-primary font-display relative flex size-16 items-center justify-center rounded-full text-3xl font-semibold shadow-[0_8px_30px_rgba(120,85,50,0.18)]',
-  section: 'flex min-h-svh flex-col items-center justify-center px-6 text-center',
+  section: 'flex min-h-svh flex-col items-center justify-center px-6 py-8 text-center',
   eyebrow: 'text-primary font-mono text-[11px] font-bold tracking-[0.3em] uppercase',
   title:
     'text-foreground font-display mt-4 text-4xl leading-tight font-medium tracking-tight md:text-5xl',
@@ -23,7 +24,7 @@ const CLS = {
   start:
     'mt-10 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase shadow-[0_10px_30px_rgba(120,85,50,0.25)]',
   text: 'mt-3 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase',
-  footer: 'fixed bottom-5 left-0 flex w-full items-center justify-center px-6',
+  footer: 'mt-6 flex w-full items-center justify-center',
   footerText: 'text-muted-foreground max-w-prose text-center text-xs leading-5 text-pretty',
 };
 
@@ -93,14 +94,19 @@ export const WelcomeView = ({
             Text Jarvis
           </Button>
         )}
+        <Link
+          href="/history"
+          className="text-muted-foreground hover:text-foreground mt-3 inline-flex min-h-11 items-center px-4 text-sm font-semibold underline-offset-4 hover:underline"
+        >
+          History
+        </Link>
+        <div className={CLS.footer}>
+          <p className={CLS.footerText}>
+            Loud room? Start with &ldquo;Jarvis&rdquo; or hold to talk. Say &ldquo;bye Jarvis&rdquo;
+            to hang up.
+          </p>
+        </div>
       </section>
-
-      <div className={CLS.footer}>
-        <p className={CLS.footerText}>
-          Loud room? Start with &ldquo;Jarvis&rdquo; or hold to talk. Say &ldquo;bye Jarvis&rdquo;
-          to hang up.
-        </p>
-      </div>
     </div>
   );
 };

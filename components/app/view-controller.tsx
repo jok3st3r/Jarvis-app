@@ -162,13 +162,13 @@ export function ViewController({
         )}
       </AnimatePresence>
       {/* What Jarvis is doing right now */}
-      {isConnected && <JarvisStatus />}
+      {isConnected && !textMode && <JarvisStatus />}
       {/* Hold to talk, plus the noisy-room hint */}
       {isConnected && !textMode && <HoldToTalk />}
       {/* Switch a voice call to typing without hanging up */}
       {isConnected && !textMode && <TextToggle onText={switchToText} />}
       {/* Which Claude model Jarvis is using, always visible during a call */}
-      {isConnected && <ModelPicker />}
+      {isConnected && !textMode && <ModelPicker />}
     </>
   );
 }

@@ -23,7 +23,7 @@ const CLS = {
   hintOff: 'text-muted-foreground text-[10px]',
 };
 
-export function ModelPicker() {
+export function ModelPicker({ inline = false }: { inline?: boolean }) {
   const { agent, agentAttributes } = useVoiceAssistant();
   const { localParticipant } = useLocalParticipant();
   const [pending, setPending] = useState<string | null>(null);
@@ -48,7 +48,7 @@ export function ModelPicker() {
   };
 
   return (
-    <div className={CLS.wrap}>
+    <div className={inline ? 'flex w-full justify-center' : CLS.wrap}>
       <div className={CLS.row}>
         <span className={CLS.label}>Brain</span>
         <div className={CLS.track}>

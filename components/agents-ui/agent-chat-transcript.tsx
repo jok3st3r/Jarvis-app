@@ -64,6 +64,8 @@ export interface AgentChatTranscriptProps
    * Additional CSS class names to apply to the conversation container.
    */
   className?: string;
+  /** Render the agent's replies as full-width Markdown in text chat. */
+  wideReplies?: boolean;
 }
 
 function ScrollToEndOnLocalMessage({ messages }: { messages: ReceivedMessage[] }) {
@@ -113,6 +115,7 @@ export function AgentChatTranscript({
   agentState,
   messages = [],
   className,
+  wideReplies = false,
   ...props
 }: AgentChatTranscriptProps) {
   const anchorsLocalMessages =
@@ -130,6 +133,7 @@ export function AgentChatTranscript({
       <MessageScroller className={className} {...props}>
         <MessageScrollerViewport preserveScrollOnPrepend={preserveScrollOnPrepend}>
           <MessageScrollerContent
+            className={wideReplies ? 'gap-6 px-4 py-4 sm:px-6' : undefined}
             spacerClassName={spacerClassName}
             aria-busy={agentState === 'thinking'}
           >
@@ -154,14 +158,25 @@ export function AgentChatTranscript({
                 <MessageScrollerItem key={id} messageId={id} scrollAnchor={_scrollAnchor}>
                   <Message align={isUser ? 'end' : 'start'} title={title}>
                     <MessageContent>
-                      <Bubble
-                        align={isUser ? 'end' : 'start'}
-                        variant={isUser ? 'secondary' : 'ghost'}
-                      >
-                        <BubbleContent>
-                          <Streamdown>{message}</Streamdown>
-                        </BubbleContent>
-                      </Bubble>
+                      {wideReplies && !isUser ? (
+                        <article
+                          aria-label="Jarvis reply"
+                          className="w-full min-w-0 text-base leading-7 wrap-break-word"
+                        >
+                          <Streamdown className="[&_strong]:text-foreground [&_a]:text-primary [&_a]:underline [&_h2]:mt-5 [&_h3]:mt-4 [&_li]:leading-7 [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_strong]:font-bold">
+                            {message}
+                          </Streamdown>
+                        </article>
+                      ) : (
+                        <Bubble
+                          align={isUser ? 'end' : 'start'}
+                          variant={isUser ? 'secondary' : 'ghost'}
+                        >
+                          <BubbleContent>
+                            <Streamdown>{message}</Streamdown>
+                          </BubbleContent>
+                        </Bubble>
+                      )}
                     </MessageContent>
                   </Message>
                 </MessageScrollerItem>

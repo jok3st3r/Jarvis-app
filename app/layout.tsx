@@ -4,7 +4,6 @@ import { Fraunces, Public_Sans } from 'next/font/google';
 import localFont from 'next/font/local';
 import { ThemeProvider } from '@/components/app/theme-provider';
 import { ThemeToggle } from '@/components/app/theme-toggle';
-import { historyButton } from '@/components/history-button';
 import { cn } from '@/lib/shadcn/utils';
 import '@/styles/globals.css';
 
@@ -70,7 +69,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange: true,
         },
         children,
-        historyButton,
         h(
           'div',
           { className: 'group fixed bottom-0 left-1/2 z-50 mb-2 -translate-x-1/2' },
