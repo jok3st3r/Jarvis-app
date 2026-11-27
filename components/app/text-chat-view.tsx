@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   useAgent,
@@ -22,6 +22,7 @@ interface TextChatViewProps {
   savedChat: SavedChat | null;
   savedSummary: ChatSummary | null;
   canResume: boolean;
+  autoContinue: boolean;
 }
 
 export function TextChatView({
@@ -31,6 +32,7 @@ export function TextChatView({
   savedChat,
   savedSummary,
   canResume,
+  autoContinue,
 }: TextChatViewProps) {
   const session = useSessionContext();
   const { messages, send, isSending } = useSessionMessages(session);
@@ -42,10 +44,12 @@ export function TextChatView({
   const [error, setError] = useState('');
   const busyRef = useRef(false);
   const asked = useRef(false);
+  const autoStarted = useRef(false);
   const pendingMode = useRef<Promise<boolean> | null>(null);
   const chat = useRef<HTMLElement>(null);
   const connected = session.isConnected;
   const full = savedSummary?.full || agentAttributes?.jarvis_chat_full === '1';
+  const expired = savedSummary?.expired;
   const historyUnavailable = agentAttributes?.jarvis_history_unavailable === '1';
   const liveMessages = connected ? messages : [];
 
@@ -128,7 +132,7 @@ export function TextChatView({
     }
   };
 
-  const continueChat = async () => {
+  const continueChat = useCallback(async () => {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
@@ -141,7 +145,17 @@ export function TextChatView({
       busyRef.current = false;
       setBusy(false);
     }
-  };
+  }, [onContinue]);
+
+  useEffect(() => {
+    if (!autoContinue || !canResume || !savedChat || connected || autoStarted.current) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('continue') !== '1') return;
+    autoStarted.current = true;
+    url.searchParams.delete('continue');
+    window.history.replaceState(null, '', url);
+    void continueChat();
+  }, [autoContinue, canResume, savedChat, connected, continueChat]);
 
   return (
     <section
@@ -216,10 +230,12 @@ export function TextChatView({
       </div>
       <div className="bg-background border-border border-t pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto w-full max-w-3xl px-4 pt-3 sm:px-6">
-          {full ? (
+          {full || expired ? (
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-muted-foreground text-sm">
-                This chat has reached its limit. You can still read it.
+                {full
+                  ? 'This chat has reached its limit. You can still read it.'
+                  : 'This older chat is saved for reference.'}
               </p>
               <Button onClick={onNewChat}>Start a new chat</Button>
             </div>
@@ -227,7 +243,7 @@ export function TextChatView({
             <div className="flex flex-wrap items-center justify-between gap-3">
               {savedChat && canResume && (
                 <Button onClick={continueChat} disabled={busy}>
-                  Continue in text
+                  {busy ? 'Opening chat…' : 'Continue in text'}
                 </Button>
               )}
               <Button variant="outline" onClick={onNewChat}>

@@ -8,7 +8,13 @@ export interface SavedChat {
   kind?: string;
   messages: SavedMessage[];
 }
-export type ChatSummary = { id: string; title: string; updated: string; full: boolean };
+export type ChatSummary = {
+  id: string;
+  title: string;
+  updated: string;
+  full: boolean;
+  expired: boolean;
+};
 
 export const validChatId = (id: string) => /^[a-zA-Z0-9_-]{1,160}$/.test(id);
 
@@ -41,10 +47,13 @@ export function summarizeChat(chat: SavedChat): ChatSummary {
     chat.messages[0]?.text ??
     'Jarvis conversation';
   const encoder = new TextEncoder();
+  const updated = chat.updated || chat.started;
+  const lastActivity = Date.parse(updated);
   return {
     id: chat.id,
     title: title.replace(/\s+/g, ' ').trim().slice(0, 90),
-    updated: chat.updated || chat.started,
+    updated,
+    expired: !Number.isFinite(lastActivity) || Date.now() - lastActivity > 30 * 86400 * 1000,
     full:
       chat.messages.filter((m) => m.role === 'user').length >= 60 ||
       chat.messages.reduce((total, m) => total + encoder.encode(m.text).length, 0) >= 80_000,

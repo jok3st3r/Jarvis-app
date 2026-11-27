@@ -6,10 +6,13 @@ import Link from 'next/link';
 
 /* eslint-disable */
 
+/* eslint-disable */
+
 // Past chats (voice and text), with folders. Folder changes save through /api/history.
 type Convo = {
   id: string;
   started: string;
+  updated?: string;
   kind?: string;
   folder: string;
   messages: { role: string; text: string }[];
@@ -197,44 +200,56 @@ export function HistoryView({
       {shown.length === 0 && <p style={S.muted}>No conversations here yet.</p>}
 
       {shown.map((c) => (
-        <details key={c.id} style={S.card}>
-          <summary style={S.summary}>
-            <strong>
-              {new Date(c.started).toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })}
+        <article key={c.id} style={S.card}>
+          <Link
+            href={`/?chat=${encodeURIComponent(c.id)}&continue=1`}
+            className="hover:bg-accent block min-h-11 rounded-md p-2"
+          >
+            <strong className="block truncate">
+              {c.messages
+                .find(
+                  (m) => m.role === 'user' && !/^\[passphrase(?: accepted)?\]$/i.test(m.text.trim())
+                )
+                ?.text.slice(0, 90) || 'Jarvis conversation'}
             </strong>
+            <span style={S.muted}>
+              {new Date(c.updated || c.started).toLocaleString('en-US', {
+                timeZone: 'America/Los_Angeles',
+              })}
+            </span>
             <span style={S.badge}>{c.kind === 'text' ? 'Text' : 'Voice'}</span>
             {c.folder && <span style={S.badge}>📁 {c.folder}</span>}
-            <div style={S.muted}>{c.messages[0] ? c.messages[0].text.slice(0, 80) : ''}</div>
-          </summary>
-          <div style={S.row as any}>
-            <Link
-              href={`/?chat=${encodeURIComponent(c.id)}`}
-              className="text-primary font-semibold underline underline-offset-4"
-            >
-              Open chat
-            </Link>
-          </div>
-          <div style={S.row as any}>
-            <span style={S.muted}>Folder:</span>
-            <select style={S.select} value={c.folder} onChange={(e) => move(c.id, e.target.value)}>
-              <option value="">Unfiled</option>
-              {folders.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
+          </Link>
+          <details className="px-2">
+            <summary style={S.summary} className="text-muted-foreground text-sm">
+              Transcript and folder
+            </summary>
+            <div style={S.row as any}>
+              <span style={S.muted}>Folder:</span>
+              <select
+                style={S.select}
+                value={c.folder}
+                onChange={(e) => move(c.id, e.target.value)}
+              >
+                <option value="">Unfiled</option>
+                {folders.map((f) => (
+                  <option key={f} value={f}>
+                    {f}
+                  </option>
+                ))}
+                <option value="__new__">+ New folder…</option>
+              </select>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              {c.messages.map((m, i) => (
+                <p key={i} style={S.msg as any}>
+                  <strong>{m.role === 'user' ? 'You: ' : 'Jarvis: '}</strong>
+                  {m.text}
+                </p>
               ))}
-              <option value="__new__">+ New folder…</option>
-            </select>
-          </div>
-          <div style={{ marginTop: 10 }}>
-            {c.messages.map((m, i) => (
-              <p key={i} style={S.msg as any}>
-                <strong>{m.role === 'user' ? 'You: ' : 'Jarvis: '}</strong>
-                {m.text}
-              </p>
-            ))}
-          </div>
-        </details>
+            </div>
+          </details>
+        </article>
       ))}
     </main>
   );

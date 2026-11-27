@@ -97,32 +97,44 @@ export const WelcomeView = ({
             Text Jarvis
           </Button>
         )}
-        <Link
-          href="/history"
-          className="text-muted-foreground hover:text-foreground mt-3 inline-flex min-h-11 items-center px-4 text-sm font-semibold underline-offset-4 hover:underline"
-        >
-          All history
-        </Link>
-        {recentChats.length > 0 && (
-          <section aria-label="Recent chats" className="mt-4 w-full max-w-sm text-left">
-            <h2 className="text-muted-foreground mb-2 text-sm font-semibold">Recents</h2>
+        <section aria-labelledby="recents-heading" className="mt-4 w-full max-w-sm text-left">
+          <div className="flex items-center justify-between">
+            <h2 id="recents-heading" className="text-muted-foreground text-sm font-semibold">
+              Recents
+            </h2>
+            <Link
+              href="/history"
+              className="text-muted-foreground hover:text-foreground inline-flex min-h-11 items-center text-sm font-semibold underline-offset-4 hover:underline"
+            >
+              All history
+            </Link>
+          </div>
+          {recentChats.length > 0 && (
             <ul className="border-border bg-card divide-border divide-y overflow-hidden rounded-xl border">
               {recentChats.map((chat) => (
                 <li key={chat.id}>
                   <Link
                     className="hover:bg-accent block min-h-11 px-3 py-2 text-sm wrap-break-word"
-                    href={`/?chat=${chat.id}`}
+                    href={`/?chat=${chat.id}&continue=1`}
                   >
-                    {chat.title || 'Jarvis conversation'}
-                    {chat.full && (
-                      <span className="text-muted-foreground ml-2 text-xs">Read only</span>
-                    )}
+                    <span className="block truncate font-medium">
+                      {chat.title || 'Jarvis conversation'}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {Number.isFinite(Date.parse(chat.updated)) &&
+                        new Date(chat.updated).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          timeZone: 'America/Los_Angeles',
+                        })}
+                      {(chat.full || chat.expired) && ' · Read only'}
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
-          </section>
-        )}
+          )}
+        </section>
         <div className={CLS.footer}>
           <p className={CLS.footerText}>
             Loud room? Start with &ldquo;Jarvis&rdquo; or hold to talk. Say &ldquo;bye Jarvis&rdquo;

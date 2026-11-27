@@ -10,8 +10,12 @@ const tokenEndpoint = isHomepageAgent
   ? 'https://livekit.com/api/homepage-agent/token'
   : '/api/token';
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ chat?: string }> }) {
-  const { chat } = await searchParams;
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ chat?: string; continue?: string }>;
+}) {
+  const { chat, continue: autoContinue } = await searchParams;
   const [recents, savedChat] = await Promise.all([
     getRecentChats().catch(() => []),
     typeof chat === 'string' ? getSavedChat(chat).catch(() => null) : null,
@@ -27,6 +31,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ c
       savedChat={savedChat}
       savedSummary={savedChat ? summarizeChat(savedChat) : null}
       requestedChat={Boolean(chat)}
+      autoContinue={autoContinue === '1'}
     />
   );
 }

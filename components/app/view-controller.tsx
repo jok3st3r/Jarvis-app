@@ -50,6 +50,7 @@ interface ViewControllerProps {
   savedSummary: ChatSummary | null;
   requestedChat: boolean;
   canResume: boolean;
+  autoContinue: boolean;
 }
 
 export function ViewController({
@@ -61,6 +62,7 @@ export function ViewController({
   savedSummary,
   requestedChat,
   canResume,
+  autoContinue,
 }: ViewControllerProps) {
   const { isConnected, start, end } = useSessionContext();
   const router = useRouter();
@@ -175,6 +177,7 @@ export function ViewController({
             savedChat={savedChat}
             savedSummary={savedSummary}
             canResume={canResume}
+            autoContinue={autoContinue}
           />
         )}
         {/* Session view */}

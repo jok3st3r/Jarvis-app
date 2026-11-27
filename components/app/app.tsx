@@ -30,6 +30,7 @@ interface AppProps {
   savedChat: SavedChat | null;
   savedSummary: ChatSummary | null;
   requestedChat: boolean;
+  autoContinue: boolean;
 }
 
 export function App({
@@ -41,8 +42,13 @@ export function App({
   savedChat,
   savedSummary,
   requestedChat,
+  autoContinue,
 }: AppProps) {
-  const canResume = !tokenServerId && tokenEndpoint === '/api/token';
+  const canResume =
+    !tokenServerId &&
+    tokenEndpoint === '/api/token' &&
+    !savedSummary?.full &&
+    !savedSummary?.expired;
   const endpoint =
     canResume && savedChat
       ? `${tokenEndpoint}?resume=${encodeURIComponent(savedChat.id)}`
@@ -71,6 +77,7 @@ export function App({
           savedSummary={savedSummary}
           requestedChat={requestedChat}
           canResume={canResume}
+          autoContinue={autoContinue}
         />
       </main>
       {!textMode && <StartAudioButton label="Start Audio" />}

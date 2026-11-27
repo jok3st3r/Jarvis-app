@@ -49,7 +49,8 @@ export async function POST(req: Request) {
     if (resume) {
       const chat = await getSavedChat(resume);
       if (!chat) return new NextResponse('Saved chat unavailable', { status: 404 });
-      if (summarizeChat(chat).full)
+      const summary = summarizeChat(chat);
+      if (summary.full || summary.expired)
         return new NextResponse('Start a new chat to continue', { status: 409 });
       const result = await redis(['SET', `jarvis:resume:${roomName}`, chat.id, 'EX', '900']);
       if (result !== 'OK') return new NextResponse('Could not reopen chat', { status: 503 });
