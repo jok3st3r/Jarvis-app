@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import type { ChatSummary } from '@/lib/conversations';
 
 const SKILLS = ['Calendar', 'Bills & reserve', 'Dispatch jobs', 'Reminders', 'Notion memory'];
 
@@ -56,12 +57,14 @@ interface WelcomeViewProps {
   startButtonText: string;
   onStartCall: () => void;
   onStartText?: () => void;
+  recentChats?: ChatSummary[];
 }
 
 export const WelcomeView = ({
   startButtonText,
   onStartCall,
   onStartText,
+  recentChats = [],
   ref,
 }: React.ComponentProps<'div'> & WelcomeViewProps) => {
   const [greeting, setGreeting] = useState('Welcome back');
@@ -98,8 +101,28 @@ export const WelcomeView = ({
           href="/history"
           className="text-muted-foreground hover:text-foreground mt-3 inline-flex min-h-11 items-center px-4 text-sm font-semibold underline-offset-4 hover:underline"
         >
-          History
+          All history
         </Link>
+        {recentChats.length > 0 && (
+          <section aria-label="Recent chats" className="mt-4 w-full max-w-sm text-left">
+            <h2 className="text-muted-foreground mb-2 text-sm font-semibold">Recents</h2>
+            <ul className="border-border bg-card divide-border divide-y overflow-hidden rounded-xl border">
+              {recentChats.map((chat) => (
+                <li key={chat.id}>
+                  <Link
+                    className="hover:bg-accent block min-h-11 px-3 py-2 text-sm wrap-break-word"
+                    href={`/?chat=${chat.id}`}
+                  >
+                    {chat.title || 'Jarvis conversation'}
+                    {chat.full && (
+                      <span className="text-muted-foreground ml-2 text-xs">Read only</span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <div className={CLS.footer}>
           <p className={CLS.footerText}>
             Loud room? Start with &ldquo;Jarvis&rdquo; or hold to talk. Say &ldquo;bye Jarvis&rdquo;

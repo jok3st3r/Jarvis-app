@@ -2,6 +2,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
+
+/* eslint-disable */
 
 // Past chats (voice and text), with folders. Folder changes save through /api/history.
 type Convo = {
@@ -203,6 +206,14 @@ export function HistoryView({
             {c.folder && <span style={S.badge}>📁 {c.folder}</span>}
             <div style={S.muted}>{c.messages[0] ? c.messages[0].text.slice(0, 80) : ''}</div>
           </summary>
+          <div style={S.row as any}>
+            <Link
+              href={`/?chat=${encodeURIComponent(c.id)}`}
+              className="text-primary font-semibold underline underline-offset-4"
+            >
+              Open chat
+            </Link>
+          </div>
           <div style={S.row as any}>
             <span style={S.muted}>Folder:</span>
             <select style={S.select} value={c.folder} onChange={(e) => move(c.id, e.target.value)}>

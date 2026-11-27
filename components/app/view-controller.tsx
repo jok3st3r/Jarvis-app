@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from 'next-themes';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import {
   useAgent,
@@ -16,6 +17,8 @@ import { JarvisStatus } from '@/components/app/jarvis-status';
 import { ModelPicker } from '@/components/app/model-picker';
 import { TextChatView, TextToggle } from '@/components/app/text-chat-view';
 import { WelcomeView } from '@/components/app/welcome-view';
+import { Button } from '@/components/ui/button';
+import type { ChatSummary, SavedChat } from '@/lib/conversations';
 
 const MotionWelcomeView = motion.create(WelcomeView);
 const MotionSessionView = motion.create(AgentSessionView_01);
@@ -42,18 +45,41 @@ interface ViewControllerProps {
   isVideoInputSupported: boolean;
   textMode: boolean;
   setTextMode: (on: boolean) => void;
+  recentChats: ChatSummary[];
+  savedChat: SavedChat | null;
+  savedSummary: ChatSummary | null;
+  requestedChat: boolean;
+  canResume: boolean;
 }
 
 export function ViewController({
   isVideoInputSupported,
   textMode,
   setTextMode,
+  recentChats,
+  savedChat,
+  savedSummary,
+  requestedChat,
+  canResume,
 }: ViewControllerProps) {
-  const { isConnected, start } = useSessionContext();
+  const { isConnected, start, end } = useSessionContext();
+  const router = useRouter();
+  const wasConnected = useRef(false);
   const agent = useAgent();
   const { resolvedTheme } = useTheme();
-  const { agent: voiceAgent } = useVoiceAssistant();
+  const { agent: voiceAgent, agentAttributes } = useVoiceAssistant();
   const { localParticipant } = useLocalParticipant();
+  const conversationFull = agentAttributes?.jarvis_chat_full === '1';
+
+  useEffect(() => {
+    if (wasConnected.current && !isConnected) router.refresh();
+    wasConnected.current = isConnected;
+  }, [isConnected, router]);
+
+  const startNew = async () => {
+    if (isConnected) await end();
+    window.location.assign('/');
+  };
 
   useEffect(() => {
     if (!isConnected || textMode || !navigator.wakeLock) return;
@@ -101,7 +127,7 @@ export function ViewController({
   const startText = () => {
     setChatMode('text');
     setTextMode(true);
-    start({ tracks: { microphone: { enabled: false } } });
+    return start({ tracks: { microphone: { enabled: false } } });
   };
 
   // Mid-call switches: tell Jarvis, then turn the mic off or on.
@@ -129,17 +155,28 @@ export function ViewController({
     <>
       <AnimatePresence mode="wait">
         {/* Welcome view */}
-        {!isConnected && (
+        {!isConnected && !requestedChat && (
           <MotionWelcomeView
             key="welcome"
             {...VIEW_MOTION_PROPS}
             startButtonText="Start call"
             onStartCall={startCall}
             onStartText={startText}
+            recentChats={recentChats}
           />
         )}
         {/* Text chat view */}
-        {isConnected && textMode && <TextChatView key="text-view" onVoice={switchToVoice} />}
+        {((isConnected && textMode) || (!isConnected && requestedChat)) && (
+          <TextChatView
+            key="text-view"
+            onVoice={switchToVoice}
+            onContinue={startText}
+            onNewChat={startNew}
+            savedChat={savedChat}
+            savedSummary={savedSummary}
+            canResume={canResume}
+          />
+        )}
         {/* Session view */}
         {isConnected && !textMode && (
           <MotionSessionView
@@ -166,7 +203,12 @@ export function ViewController({
       {/* Hold to talk, plus the noisy-room hint */}
       {isConnected && !textMode && <HoldToTalk />}
       {/* Switch a voice call to typing without hanging up */}
-      {isConnected && !textMode && <TextToggle onText={switchToText} />}
+      {isConnected && !textMode && !conversationFull && <TextToggle onText={switchToText} />}
+      {isConnected && !textMode && conversationFull && (
+        <div className="fixed inset-x-0 top-28 z-[55] flex justify-center">
+          <Button onClick={startNew}>Chat is full · Start a new chat</Button>
+        </div>
+      )}
       {/* Which Claude model Jarvis is using, always visible during a call */}
       {isConnected && !textMode && <ModelPicker />}
     </>

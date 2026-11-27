@@ -16,6 +16,7 @@ import {
   MessageScrollerViewport,
   useMessageScroller,
 } from '@/components/ui/message-scroller';
+import type { SavedMessage } from '@/lib/conversations';
 
 /**
  * Props for the AgentChatTranscript component.
@@ -66,6 +67,7 @@ export interface AgentChatTranscriptProps
   className?: string;
   /** Render the agent's replies as full-width Markdown in text chat. */
   wideReplies?: boolean;
+  savedMessages?: SavedMessage[];
 }
 
 function ScrollToEndOnLocalMessage({ messages }: { messages: ReceivedMessage[] }) {
@@ -116,10 +118,25 @@ export function AgentChatTranscript({
   messages = [],
   className,
   wideReplies = false,
+  savedMessages = [],
   ...props
 }: AgentChatTranscriptProps) {
   const anchorsLocalMessages =
     scrollAnchor === true || scrollAnchor === 'any' || scrollAnchor === 'user';
+  const transcript = [
+    ...savedMessages.map((m, index) => ({
+      id: `saved-${index}`,
+      message: m.text,
+      isUser: m.role === 'user',
+      timestamp: undefined,
+    })),
+    ...messages.map((m) => ({
+      id: m.id,
+      message: m.message,
+      isUser: Boolean(m.from?.isLocal),
+      timestamp: m.timestamp,
+    })),
+  ];
 
   return (
     <MessageScrollerProvider
@@ -137,12 +154,12 @@ export function AgentChatTranscript({
             spacerClassName={spacerClassName}
             aria-busy={agentState === 'thinking'}
           >
-            {messages.map((receivedMessage) => {
-              const { id, timestamp, from, message } = receivedMessage;
-              const time = new Date(timestamp);
-              const isUser = from?.isLocal;
+            {transcript.map(({ id, timestamp, isUser, message }) => {
               const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US';
-              const title = time.toLocaleTimeString(locale, { timeStyle: 'full' });
+              const title =
+                timestamp === undefined
+                  ? undefined
+                  : new Date(timestamp).toLocaleTimeString(locale, { timeStyle: 'full' });
               let _scrollAnchor = false;
 
               if (

@@ -10,6 +10,7 @@ import { ViewController } from '@/components/app/view-controller';
 import { Toaster } from '@/components/ui/sonner';
 import { useAgentErrors } from '@/hooks/useAgentErrors';
 import { useDebugMode } from '@/hooks/useDebug';
+import type { ChatSummary, SavedChat } from '@/lib/conversations';
 
 const IN_DEVELOPMENT = process.env.NODE_ENV !== 'production';
 
@@ -25,28 +26,51 @@ interface AppProps {
   tokenEndpoint: string;
   agentName?: string;
   isVideoInputSupported: boolean;
+  recentChats: ChatSummary[];
+  savedChat: SavedChat | null;
+  savedSummary: ChatSummary | null;
+  requestedChat: boolean;
 }
 
-export function App({ tokenServerId, tokenEndpoint, agentName, isVideoInputSupported }: AppProps) {
+export function App({
+  tokenServerId,
+  tokenEndpoint,
+  agentName,
+  isVideoInputSupported,
+  recentChats,
+  savedChat,
+  savedSummary,
+  requestedChat,
+}: AppProps) {
+  const canResume = !tokenServerId && tokenEndpoint === '/api/token';
+  const endpoint =
+    canResume && savedChat
+      ? `${tokenEndpoint}?resume=${encodeURIComponent(savedChat.id)}`
+      : tokenEndpoint;
   const tokenSource = useMemo(
     () =>
       tokenServerId
         ? TokenSource.developmentTokenServer(tokenServerId)
-        : TokenSource.endpoint(tokenEndpoint),
-    [tokenServerId, tokenEndpoint]
+        : TokenSource.endpoint(endpoint),
+    [tokenServerId, endpoint]
   );
 
   const session = useSession(tokenSource, agentName ? { agentName } : undefined);
-  const [textMode, setTextMode] = useState(false);
+  const [textMode, setTextMode] = useState(Boolean(savedChat));
 
   return (
     <AgentSessionProvider session={session} muted={textMode}>
       <AppSetup />
-      <main className="grid h-svh grid-cols-1 place-content-center">
+      <main className="min-h-svh">
         <ViewController
           isVideoInputSupported={isVideoInputSupported}
           textMode={textMode}
           setTextMode={setTextMode}
+          recentChats={recentChats}
+          savedChat={savedChat}
+          savedSummary={savedSummary}
+          requestedChat={requestedChat}
+          canResume={canResume}
         />
       </main>
       {!textMode && <StartAudioButton label="Start Audio" />}

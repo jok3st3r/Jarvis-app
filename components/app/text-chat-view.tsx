@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
   useAgent,
   useLocalParticipant,
@@ -12,12 +13,25 @@ import { AgentChatTranscript } from '@/components/agents-ui/agent-chat-transcrip
 import { askTextMode } from '@/components/app/chat-mode';
 import { ModelPicker } from '@/components/app/model-picker';
 import { Button } from '@/components/ui/button';
+import type { ChatSummary, SavedChat } from '@/lib/conversations';
 
 interface TextChatViewProps {
   onVoice: () => Promise<boolean>;
+  onContinue: () => Promise<void>;
+  onNewChat: () => Promise<void>;
+  savedChat: SavedChat | null;
+  savedSummary: ChatSummary | null;
+  canResume: boolean;
 }
 
-export function TextChatView({ onVoice }: TextChatViewProps) {
+export function TextChatView({
+  onVoice,
+  onContinue,
+  onNewChat,
+  savedChat,
+  savedSummary,
+  canResume,
+}: TextChatViewProps) {
   const session = useSessionContext();
   const { messages, send, isSending } = useSessionMessages(session);
   const { state: agentState } = useAgent();
@@ -30,6 +44,10 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
   const asked = useRef(false);
   const pendingMode = useRef<Promise<boolean> | null>(null);
   const chat = useRef<HTMLElement>(null);
+  const connected = session.isConnected;
+  const full = savedSummary?.full || agentAttributes?.jarvis_chat_full === '1';
+  const historyUnavailable = agentAttributes?.jarvis_history_unavailable === '1';
+  const liveMessages = connected ? messages : [];
 
   useEffect(() => {
     const viewport = window.visualViewport;
@@ -58,6 +76,10 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
 
   // Safety net: make sure Jarvis knows this is a text chat, even if the start signal got lost.
   useEffect(() => {
+    if (!connected) {
+      asked.current = false;
+      return;
+    }
     if (!agent || asked.current || agentAttributes?.jarvis_text === '1') {
       return;
     }
@@ -65,11 +87,11 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
     pendingMode.current = askTextMode(localParticipant, agent, true).finally(() => {
       pendingMode.current = null;
     });
-  }, [agent, agentAttributes, localParticipant]);
+  }, [connected, agent, agentAttributes, localParticipant]);
 
   const submit = async () => {
     const text = draft.trim();
-    if (!text || isSending || busyRef.current) {
+    if (!text || !connected || full || isSending || busyRef.current) {
       return;
     }
     busyRef.current = true;
@@ -106,6 +128,21 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
     }
   };
 
+  const continueChat = async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await onContinue();
+    } catch {
+      setError('Couldn’t continue this chat. Try again or start a new chat.');
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  };
+
   return (
     <section
       ref={chat}
@@ -115,42 +152,63 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
       <header className="border-border border-b pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-1 px-4 pb-2 sm:px-6">
           <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3">
-            <h1 className="font-display text-xl font-semibold">Jarvis</h1>
+            <h1
+              className="font-display max-w-[18rem] truncate text-xl font-semibold"
+              title={savedSummary?.title}
+            >
+              {savedSummary?.title || 'Jarvis'}
+            </h1>
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="min-h-11"
-                onClick={switchToVoice}
-                disabled={busy}
-              >
-                Switch to voice
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="min-h-11"
-                onClick={() => session.end()}
-              >
-                End chat
-              </Button>
+              {connected && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="min-h-11"
+                    onClick={switchToVoice}
+                    disabled={busy}
+                  >
+                    Switch to voice
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-h-11"
+                    onClick={() => session.end()}
+                  >
+                    End chat
+                  </Button>
+                </>
+              )}
+              {!connected && (
+                <Button asChild variant="outline" size="sm" className="min-h-11">
+                  <Link href="/">Back to Recents</Link>
+                </Button>
+              )}
             </div>
           </div>
-          <ModelPicker inline />
+          {connected && <ModelPicker inline />}
           <p role="status" className="text-muted-foreground min-h-4 truncate text-center text-xs">
-            {agentAttributes?.jarvis_status}
+            {historyUnavailable
+              ? 'Chat history is temporarily unavailable.'
+              : agentAttributes?.jarvis_status}
           </p>
         </div>
       </header>
       <div className="min-h-0 min-w-0">
-        {messages.length === 0 ? (
+        {liveMessages.length === 0 && !savedChat?.messages.length ? (
           <p className="text-muted-foreground mt-8 px-4 text-center text-sm">
-            {agent ? 'How can I help?' : 'Waking Jarvis up...'}
+            {!connected
+              ? 'This saved chat is unavailable.'
+              : agent
+                ? 'How can I help?'
+                : 'Waking Jarvis up...'}
           </p>
         ) : (
           <AgentChatTranscript
             agentState={agentState}
-            messages={messages}
+            messages={liveMessages}
+            savedMessages={savedChat?.messages}
             className="mx-auto h-full max-w-3xl"
             wideReplies
           />
@@ -158,30 +216,52 @@ export function TextChatView({ onVoice }: TextChatViewProps) {
       </div>
       <div className="bg-background border-border border-t pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto w-full max-w-3xl px-4 pt-3 sm:px-6">
-          <div className="flex items-end gap-2">
-            <textarea
-              aria-label="Message Jarvis"
-              className="bg-card border-border focus-visible:ring-ring max-h-36 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border px-3 py-2.5 text-base leading-6 focus-visible:ring-2 focus-visible:outline-none"
-              rows={1}
-              value={draft}
-              placeholder="Message Jarvis"
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  submit();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              className="min-h-11 rounded-full px-4 font-semibold"
-              onClick={submit}
-              disabled={!draft.trim() || busy || isSending}
-            >
-              Send
-            </Button>
-          </div>
+          {full ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-muted-foreground text-sm">
+                This chat has reached its limit. You can still read it.
+              </p>
+              <Button onClick={onNewChat}>Start a new chat</Button>
+            </div>
+          ) : !connected ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {savedChat && canResume && (
+                <Button onClick={continueChat} disabled={busy}>
+                  Continue in text
+                </Button>
+              )}
+              <Button variant="outline" onClick={onNewChat}>
+                Start a new chat
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-end gap-2">
+                <textarea
+                  aria-label="Message Jarvis"
+                  className="bg-card border-border focus-visible:ring-ring max-h-36 min-h-11 min-w-0 flex-1 resize-none rounded-2xl border px-3 py-2.5 text-base leading-6 focus-visible:ring-2 focus-visible:outline-none"
+                  rows={1}
+                  value={draft}
+                  placeholder="Message Jarvis"
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      submit();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  className="min-h-11 rounded-full px-4 font-semibold"
+                  onClick={submit}
+                  disabled={!draft.trim() || busy || isSending}
+                >
+                  Send
+                </Button>
+              </div>
+            </>
+          )}
           {error && (
             <p role="status" className="text-destructive mt-2 text-sm">
               {error}
