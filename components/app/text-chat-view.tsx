@@ -165,14 +165,14 @@ export function TextChatView({
     >
       <header className="border-border border-b pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-1 px-4 pb-2 sm:px-6">
-          <div className="flex min-h-12 flex-wrap items-center justify-between gap-x-3">
+          <div className="flex min-h-12 items-center justify-between gap-x-3">
             <h1
-              className="font-display max-w-[18rem] truncate text-xl font-semibold"
+              className="font-display min-w-0 flex-1 truncate text-xl font-semibold"
               title={savedSummary?.title}
             >
               {savedSummary?.title || 'Jarvis'}
             </h1>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               {connected && (
                 <>
                   <Button

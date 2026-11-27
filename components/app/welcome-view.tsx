@@ -9,7 +9,7 @@ const SKILLS = ['Calendar', 'Bills & reserve', 'Dispatch jobs', 'Reminders', 'No
 
 // Tailwind classes for the welcome screen, kept together so the look is easy to tweak.
 const CLS = {
-  ring: 'relative mb-8 flex size-24 items-center justify-center',
+  ring: 'relative mb-5 flex size-20 items-center justify-center sm:mb-8 sm:size-24',
   ping: 'bg-primary/15 absolute inset-0 animate-ping rounded-full [animation-duration:3s]',
   outer: 'border-primary/40 absolute inset-0 rounded-full border',
   inner: 'border-primary/25 absolute inset-2 rounded-full border',
@@ -23,7 +23,7 @@ const CLS = {
   chips: 'mt-6 flex max-w-md flex-wrap justify-center gap-2',
   chip: 'border-border bg-card/70 text-foreground/80 rounded-full border px-3 py-1 text-xs font-medium',
   start:
-    'mt-10 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase shadow-[0_10px_30px_rgba(120,85,50,0.25)]',
+    'mt-6 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase shadow-[0_10px_30px_rgba(120,85,50,0.25)] sm:mt-10',
   text: 'mt-3 h-12 w-64 rounded-full font-mono text-xs font-bold tracking-wider uppercase',
   footer: 'mt-6 flex w-full items-center justify-center',
   footerText: 'text-muted-foreground max-w-prose text-center text-xs leading-5 text-pretty',
