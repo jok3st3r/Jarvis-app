@@ -161,7 +161,7 @@ export function TextChatView({
     <section
       ref={chat}
       aria-label="Chat with Jarvis"
-      className="bg-background fixed inset-x-0 top-0 z-[60] grid h-dvh grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
+      className="bg-background fixed inset-x-0 top-0 z-[60] grid h-dvh grid-cols-[minmax(0,1fr)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden"
     >
       <header className="border-border border-b pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex w-full max-w-3xl flex-col gap-1 px-4 pb-2 sm:px-6">
